@@ -6,7 +6,7 @@ Check [examples/websocket](examples/websocket/) for more details.
 #### Server
 ```ts
 import Websocket, { WebSocketServer } from 'ws'
-import { Middleware } from "bidi";
+import { Middleware } from "bidix";
 
 const wss = new WebSocketServer({ port: 8080 })
 
@@ -32,7 +32,7 @@ wss.on('connection', (ws: Websocket) => {
 #### Client
 ```ts
 import Websocket from 'ws'
-import { Consumer } from "bidi";
+import { Consumer } from "bidix";
 import type { H } from "./server";
 
 const ws = new Websocket('ws://localhost:8080')

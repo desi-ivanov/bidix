@@ -1,5 +1,5 @@
 {
-  "name": "bidi",
+  "name": "bidix",
   "version": "1.0.0",
   "main": "dist/src/index.js",
   "license": "MIT",
