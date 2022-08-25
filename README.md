@@ -1,4 +1,4 @@
-# bidi
+# bidix
 An inter-process communication middleware for simplified bidirectional callbacks management, fully typed.
 
 ### WebSocket example
