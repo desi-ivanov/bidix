@@ -1,0 +1,17 @@
+{
+  "name": "bidi",
+  "version": "1.0.0",
+  "main": "dist/src/index.js",
+  "license": "MIT",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "yarn build"
+  },
+  "devDependencies": {
+    "ws": "^8.8.1",
+    "@types/websocket": "^1.0.5",
+    "@types/ws": "^8.5.3",
+    "typescript": "^4.7.4"
+  }
+}
