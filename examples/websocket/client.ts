@@ -13,5 +13,11 @@ ws.on("open", () => {
   middleware.add(1, 2).then((r) => console.log("Add res", r));
   middleware.sub(1, 2).then((r) => console.log("Sub res", r));
   middleware.callbackExample(7, (r) => console.log("Callback example", r));
-  middleware.subscribeToNotifications((r) => console.log("Got Notification", r));
+  const r = middleware.subscribeToNotifications((r) => console.log("Got Notification", r)).then(rrr => {
+    setTimeout(() => {
+      rrr.unsubscribe()
+    }, 5000);
+  })
+  middleware.throws().catch((e) => console.log("Error", e));
+
 });

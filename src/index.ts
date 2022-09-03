@@ -8,6 +8,7 @@ export type Serialized =
 export type Message =
   | { kind: "request", functionId: string, requestId: string, data: Serialized[] }
   | { kind: "response", requestId: string, data: Serialized }
+  | { kind: "error", requestId: string, error: string }
 
 export type Duplex = {
   send: (data: string) => void
@@ -25,6 +26,7 @@ export class Middleware<
 > {
   #id: IdGenerator;
   #callbacks: { [key: string]: (...data: any) => Promise<any> | any } = {};
+  #rejectCallbacks: { [key: string]: (...data: any) => Promise<any> | any } = {};
   proxy = new Proxy<TConsumed>({} as any, { get: (_, prop) => (...args: any[]) => this.invoke(String(prop), ...args) });
   constructor(private readonly duplex: Duplex, handlers: TProvided) {
     this.#id = new IdGenerator();
@@ -46,7 +48,9 @@ export class Middleware<
         const { functionId, requestId, data } = message;
         const callback = this.#callbacks[functionId];
         if(callback) {
-          Promise.resolve(callback(...data.map(this.deserialize.bind(this)))).then(result => this.sendResponse(requestId, result));
+          Promise.resolve(callback(...data.map(this.deserialize.bind(this))))
+            .then(result => this.sendResponse(requestId, result))
+            .catch(error => this.sendError(requestId, error));
         }
       } else if(message.kind === "response") {
         const { requestId, data } = message;
@@ -54,18 +58,29 @@ export class Middleware<
         if(callback) {
           callback(this.deserialize(data));
         }
+      } else if(message.kind === "error") {
+        const { requestId, error } = message;
+        const reject = this.#rejectCallbacks[requestId];
+        if(reject) {
+          reject(error);
+        }
       }
+
     });
   }
 
   private sendResponse(requestId: string, result: any) {
     this.duplex.send(JSON.stringify({ kind: "response", requestId, data: this.serialize(result) }));
   }
+  private sendError(requestId: string, error: string) {
+    this.duplex.send(JSON.stringify({ kind: "error", requestId, error: String(error) }));
+  }
 
   public invoke(functionId: string, ...data: any[]): Promise<Serialized> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const requestId = this.#id.generate();
       this.#callbacks[requestId] = resolve;
+      this.#rejectCallbacks[requestId] = reject;
       this.duplex.send(JSON.stringify({ kind: "request", functionId, requestId, data: data.map(this.serialize.bind(this)) }));
     });
   }

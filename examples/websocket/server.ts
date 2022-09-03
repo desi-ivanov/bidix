@@ -10,8 +10,21 @@ const handlers = {
     setTimeout(() => onRes(a ** 2), 1000);
   },
   subscribeToNotifications: async (onNotification: (a: number) => void) => {
-    setInterval(() => onNotification(Math.random()), 1000);
+    const int = setInterval(() => {
+
+      console.log("SENDING NUMBER")
+      onNotification(Math.random())
+    }, 1000);
+    return {
+      unsubscribe: () => {
+        console.log("Unsubscribing")
+        clearInterval(int)
+      }
+    };
   },
+  throws: async () => {
+    throw new Error("catchIt")
+  }
 };
 export type H = typeof handlers;
 
