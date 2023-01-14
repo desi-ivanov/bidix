@@ -62,3 +62,6 @@ ws.on("open", () => {
 // Got Notification 0.7218411908449844
 // ...
 ```
+# License
+
+MIT
