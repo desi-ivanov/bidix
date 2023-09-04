@@ -28,17 +28,19 @@ export class Middleware<
   #callbacks: { [key: string]: (...data: any) => Promise<any> | any } = {};
   #rejectCallbacks: { [key: string]: (...data: any) => Promise<any> | any } = {};
   proxy = new Proxy<TConsumed>({} as any, { get: (_, prop) => (...args: any[]) => this.invoke(String(prop), ...args) });
+  handlers: TProvided;
   constructor(private readonly duplex: Duplex, handlers: TProvided) {
     this.#id = new IdGenerator();
     this.#callbacks = {};
     this.#initDuplexSubscriber();
-    Object.entries(handlers).forEach(([key, value]) => this.onFunction(key, value));
+    this.handlers = handlers;
   }
   clean() {
     this.#callbacks = {};
   }
-  public onFunction(functionId: string, callback: (...data: any) => Promise<any> | any) {
-    this.#callbacks[functionId] = callback;
+
+  findCallback(idOrName: string) {
+    return this.#callbacks[idOrName] || this.handlers[idOrName];
   }
 
   #initDuplexSubscriber() {
@@ -46,7 +48,7 @@ export class Middleware<
       const message = JSON.parse(msg) as Message;
       if(message.kind === "request") {
         const { functionId, requestId, data } = message;
-        const callback = this.#callbacks[functionId];
+        const callback = this.findCallback(functionId);
         if(callback) {
           Promise.resolve(callback(...data.map(this.deserialize.bind(this))))
             .then(result => this.sendResponse(requestId, result))
@@ -54,7 +56,7 @@ export class Middleware<
         }
       } else if(message.kind === "response") {
         const { requestId, data } = message;
-        const callback = this.#callbacks[requestId];
+        const callback = this.findCallback(requestId);
         if(callback) {
           callback(this.deserialize(data));
         }
